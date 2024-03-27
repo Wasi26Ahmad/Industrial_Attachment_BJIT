@@ -1,44 +1,75 @@
-from kivy.app import App
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.button import Button
-from kivy.uix.label import Label
-from kivy.uix.filechooser import FileChooserIconView
-from kivy.uix.popup import Popup
-from kivy.uix.image import Image
-from kivy.uix.textinput import TextInput
-from kivy.uix.spinner import Spinner
-from kivy.uix.dropdown import DropDown
-from kivy.uix.screenmanager import ScreenManager, Screen
-from kivy.properties import ObjectProperty
-from kivy.lang import Builder
+import sys
+from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QPushButton, QLabel, QVBoxLayout, QWidget, QMessageBox
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPalette, QColor
 from prediction import predict_image, load_model
 
+class PredictScreen(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle('Image Prediction')
+        self.setGeometry(100, 100, 800, 600)
 
+        # Set dark theme
+        self.setStyleSheet("background-color: #2D2D2D;")
+        palette = QPalette()
+        palette.setColor(QPalette.Window, QColor(53, 53, 53))
+        palette.setColor(QPalette.WindowText, QColor(255, 255, 255))
+        palette.setColor(QPalette.Base, QColor(25, 25, 25))
+        palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
+        palette.setColor(QPalette.ToolTipBase, QColor(255, 255, 255))
+        palette.setColor(QPalette.ToolTipText, QColor(255, 255, 255))
+        palette.setColor(QPalette.Text, QColor(255, 255, 255))
+        palette.setColor(QPalette.Button, QColor(53, 53, 53))
+        palette.setColor(QPalette.ButtonText, QColor(255, 255, 255))
+        palette.setColor(QPalette.BrightText, QColor(255, 0, 0))
+        palette.setColor(QPalette.Link, QColor(42, 130, 218))
+        palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
+        palette.setColor(QPalette.HighlightedText, QColor(0, 0, 0))
+        self.setPalette(palette)
 
-class PredictScreen(Screen):
-    def __init__(self, **kwargs):
-        super(PredictScreen, self).__init__(**kwargs)
-        self.file_chooser = FileChooserIconView(path='.', filters=['*.jpg', '*.png'])
-        self.add_widget(self.file_chooser)
-        self.predict_button = Button(text='Predict', on_press=self.predict)
-        self.add_widget(self.predict_button)
-        self.result_label = Label(text='')
-        self.add_widget(self.result_label)
+        # Create layout
+        layout = QVBoxLayout()
 
-    def predict(self, instance):
-        if len(self.file_chooser.selection) == 0:
-            popup = Popup(title='Error', content=Label(text='No image selected'), size_hint=(None, None), size=(400, 400))
-            popup.open()
+        # File chooser button
+        self.file_chooser_button = QPushButton('Choose Image')
+        self.file_chooser_button.clicked.connect(self.choose_image)
+        layout.addWidget(self.file_chooser_button)
+
+        # Predict button
+        self.predict_button = QPushButton('Predict')
+        self.predict_button.clicked.connect(self.predict)
+        layout.addWidget(self.predict_button)
+
+        # Result label
+        self.result_label = QLabel('')
+        layout.addWidget(self.result_label)
+
+        # Set layout
+        container = QWidget()
+        container.setLayout(layout)
+        self.setCentralWidget(container)
+
+    def choose_image(self):
+        options = QFileDialog.Options()
+        options |= QFileDialog.ReadOnly
+        fileName, _ = QFileDialog.getOpenFileName(self, "Choose Image", "", "Images (*.png *.xpm *.jpg);;All Files (*)", options=options)
+        if fileName:
+            self.image_path = fileName
+
+    def predict(self):
+        if not hasattr(self, 'image_path') or not self.image_path:
+            QMessageBox.warning(self, 'Error', 'No image selected')
         else:
-            image_path = self.file_chooser.selection[0]
-            result = predict_image(image_path, load_model())
-            self.result_label.text = f'Prediction: {result}'
+            result = predict_image(self.image_path, load_model())
+            self.result_label.setText(f'Prediction: {result}')
 
-class MyApp(App):
-    def build(self):
-        sm = ScreenManager()
-        sm.add_widget(PredictScreen(name='predict'))
-        return sm
+def load_model():
+    # Placeholder for loading the model
+    pass
 
 if __name__ == '__main__':
-    MyApp().run()
+    app = QApplication(sys.argv)
+    window = PredictScreen()
+    window.show()
+    sys.exit(app.exec_())
