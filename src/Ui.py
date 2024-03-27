@@ -1,8 +1,13 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QPushButton, QLabel, QVBoxLayout, QWidget, QMessageBox
+from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, \
+    QWidget, QMessageBox, QDialog
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPalette, QColor
+from PyQt5.QtGui import QPalette, QColor, QPixmap
+import torch
+from torchvision import models
+
 from prediction import predict_image, load_model
+
 
 class PredictScreen(QMainWindow):
     def __init__(self):
@@ -10,7 +15,6 @@ class PredictScreen(QMainWindow):
         self.setWindowTitle('Image Prediction')
         self.setGeometry(100, 100, 800, 600)
 
-        # Set dark theme
         self.setStyleSheet("background-color: #2D2D2D;")
         palette = QPalette()
         palette.setColor(QPalette.Window, QColor(53, 53, 53))
@@ -28,45 +32,78 @@ class PredictScreen(QMainWindow):
         palette.setColor(QPalette.HighlightedText, QColor(0, 0, 0))
         self.setPalette(palette)
 
-        # Create layout
-        layout = QVBoxLayout()
+        main_layout = QVBoxLayout()
 
-        # File chooser button
+        self.image_label = QLabel()
+        main_layout.addWidget(self.image_label)
+
+        button_layout = QHBoxLayout()
+        button_layout.addStretch(1)
+
         self.file_chooser_button = QPushButton('Choose Image')
         self.file_chooser_button.clicked.connect(self.choose_image)
-        layout.addWidget(self.file_chooser_button)
+        self.file_chooser_button.setFixedSize(300, 50)
+        self.file_chooser_button.setStyleSheet("background-color: #000208; color: white;")
+        button_layout.addWidget(self.file_chooser_button)
 
-        # Predict button
         self.predict_button = QPushButton('Predict')
         self.predict_button.clicked.connect(self.predict)
-        layout.addWidget(self.predict_button)
+        self.predict_button.setFixedSize(300, 50)
+        self.predict_button.setStyleSheet("background-color: #000208; color: white;")
+        button_layout.addWidget(self.predict_button)
 
-        # Result label
-        self.result_label = QLabel('')
-        layout.addWidget(self.result_label)
+        button_layout.addStretch(1)
 
-        # Set layout
+        bottom_layout = QVBoxLayout()
+        bottom_layout.addStretch(1)
+        bottom_layout.addLayout(button_layout)
+
+        main_layout.addLayout(bottom_layout)
+
         container = QWidget()
-        container.setLayout(layout)
+        container.setLayout(main_layout)
         self.setCentralWidget(container)
 
     def choose_image(self):
         options = QFileDialog.Options()
         options |= QFileDialog.ReadOnly
-        fileName, _ = QFileDialog.getOpenFileName(self, "Choose Image", "", "Images (*.png *.xpm *.jpg);;All Files (*)", options=options)
+        fileName, _ = QFileDialog.getOpenFileName(self, "Choose Image", "", "Images (*.png *.xpm *.jpg);;All Files (*)",
+                                                  options=options)
         if fileName:
             self.image_path = fileName
+            pixmap = QPixmap(self.image_path)
+            self.image_label.setPixmap(pixmap.scaled(300, 300, Qt.KeepAspectRatio))
 
     def predict(self):
         if not hasattr(self, 'image_path') or not self.image_path:
             QMessageBox.warning(self, 'Error', 'No image selected')
         else:
             result = predict_image(self.image_path, load_model())
-            self.result_label.setText(f'Prediction: {result}')
+            dialog = QDialog(self)
+            dialog.setWindowTitle('Prediction Result')
+            dialog.setGeometry(100, 100, 300, 200)
+            layout = QVBoxLayout()
+
+            layout.addStretch(1)
+            result_label = QLabel(f'Prediction: {result}')
+            result_label.setStyleSheet("color: white; font-size: 36px;")
+            layout.addWidget(result_label)
+            layout.addStretch(1)
+
+            dialog.setLayout(layout)
+            dialog.exec_()
+
 
 def load_model():
-    # Placeholder for loading the model
-    pass
+    try:
+        model = models.resnet18()
+        model.load_state_dict(torch.load('model_attachment_V1.pth', map_location=torch.device('cpu')))
+        model.eval()
+        return model
+    except Exception as e:
+        print(f"Error loading model: {e}")
+        return None
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
