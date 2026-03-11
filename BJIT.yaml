@@ -1,0 +1,65 @@
+# Project Metadata
+project:
+  name: "Industrial_Attachment_BJIT"
+  title: "Bike vs Car Classification App"
+  description: |
+    This repository contains a desktop application built with Python and Kivy. 
+    The application predicts whether an image is of a bike or a car using a trained model.
+    Model training, preprocessing, prediction and GUI integration is included.
+
+  author: "Wasi Ahmad"
+  license: "MIT"
+  github: "https://github.com/Wasi26Ahmad/Industrial_Attachment_BJIT"
+
+# Dependencies required to run the app
+environment:
+  python_version: ">=3.7"
+  packages:
+    - kivy
+    - torch
+    - torchvision
+    - numpy
+    - Pillow
+    - matplotlib
+    - sklearn
+
+# File Structure Overview
+structure:
+  root_files:
+    - README.md
+    - LICENSE
+    - project.yaml
+  main_directory: "src/"
+  modules:
+    - Ui.py                # App UI logic
+    - model.py             # Model architecture definition
+    - training.py          # Training script
+    - preprocessing.py     # Dataset preprocessing
+    - prediction.py        # Model inference logic
+    - val.py               # Validation script
+    - model_attachment_V1.pth  # Trained model weights
+
+# Usage Instructions
+usage:
+  - step: "Clone the repository"
+    command: "git clone https://github.com/Wasi26Ahmad/Industrial_Attachment_BJIT.git"
+
+  - step: "Navigate to the project directory"
+    command: "cd Industrial_Attachment_BJIT"
+
+  - step: "Install dependencies"
+    command: "pip install -r requirements.txt"
+
+  - step: "Run the GUI app"
+    command: "python src/Ui.py"
+
+# Notes
+notes:
+  - Ensure Python 3.7 or higher is used.
+  - The model weights file must be present in src/ for prediction to work.
+  - The app uses PyTorch for model loading & inference.
+
+# Optional: GitHub Release / CI definitions (if needed later)
+github_actions:
+  lint: false
+  tests: false
